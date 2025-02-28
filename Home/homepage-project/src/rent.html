@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rent a Property</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Rent a Property</h1>
+    </header>
+    <main>
+        <div class="income-slider">
+            <label for="incomeRange">Select your annual income:</label>
+            <input type="range" id="incomeRange" name="incomeRange" min="0" max="999999" step="1000" oninput="updateIncomeValue(this.value)">
+            <span id="incomeValue">$5000</span>
+            <br>
+            <button onclick="saveIncome()">Enter Income</button>
+        </div>
+    </main>
+    <script>
+        function updateIncomeValue(value) {
+            document.getElementById('incomeValue').textContent = `$${value}`;
+        }
+
+        function saveIncome() {
+            const income = document.getElementById('incomeRange').value;
+            alert(`Income value $${income} saved for later use.`);
+            // Here you can add code to save the income value for later use
+        }
+    </script>
+</body>
+</html>
