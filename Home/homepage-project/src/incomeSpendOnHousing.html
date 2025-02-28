@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Income Spend on Housing</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>How much of your income would you prefer to spend on housing?</h1>
+    </header>
+    <main>
+        <div class="housing-spend">
+            <label>
+                <input type="radio" name="housingSpend" value="Less than 30%"> Less than 30%
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="housingSpend" value="30-40%"> 30-40%
+            </label>
+            <br>
+            <label>
+                <input type="radio" name="housingSpend" value="40% or more"> 40% or more
+            </label>
+            <br>
+            <button onclick="saveHousingSpend()">Enter</button>
+        </div>
+    </main>
+    <script>
+        function saveHousingSpend() {
+            const selectedOption = document.querySelector('input[name="housingSpend"]:checked');
+            if (selectedOption) {
+                localStorage.setItem('housingSpend', selectedOption.value);
+                alert(`Housing spend preference ${selectedOption.value} saved for later use.`);
+                // Here you can add code to redirect to another page if needed
+            } else {
+                alert('Please select an option.');
+            }
+        }
+    </script>
+</body>
+</html>

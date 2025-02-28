@@ -28,7 +28,7 @@
             const savings = parseFloat(document.getElementById('savingsRange').value);
             localStorage.setItem('selectedSavings', savings);
             alert(`Savings value $${savings} saved for later use.`);
-            // Here you can add code to redirect to another page if needed
+            window.location.href = 'languageSelector.html';
         }
     </script>
 </body>

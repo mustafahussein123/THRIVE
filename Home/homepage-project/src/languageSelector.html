@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Language Selector</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Select Your Preferred Language</h1>
+    </header>
+    <main>
+        <div class="language-selector">
+            <label for="languageDropdown">Select your preferred language:</label>
+            <select id="languageDropdown" name="languageDropdown" onchange="checkOtherOption(this.value)">
+                <option value="English">English</option>
+                <option value="Spanish">Spanish</option>
+                <option value="Other">Other</option>
+            </select>
+            <br>
+            <button onclick="saveLanguage()">Enter</button>
+        </div>
+    </main>
+    <script>
+        function checkOtherOption(value) {
+            if (value === 'Other') {
+                const otherLang = prompt("Please enter your preferred language:", "");
+                if (otherLang !== null && otherLang !== "") {
+                    localStorage.setItem('preferredLang', otherLang);
+                } else {
+                    document.getElementById('languageDropdown').value = "";
+                }
+            }
+        }
+
+        function saveLanguage() {
+            const selectedLang = document.getElementById('languageDropdown').value;
+            if (selectedLang !== 'Other') {
+                localStorage.setItem('preferredLang', selectedLang);
+            }
+            alert(`Preferred language ${localStorage.getItem('preferredLang')} saved for later use.`);
+            window.location.href = 'incomeSpendOnHousing.html';
+        }
+    </script>
+</body>
+</html>

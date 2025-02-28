@@ -89,11 +89,11 @@ img {
     background-color: #0056b3;
 }
 
-.income-slider, .savings-slider {
+.income-slider, .savings-slider, .language-selector, .housing-spend {
     text-align: center;
 }
 
-.income-slider label, .savings-slider label {
+.income-slider label, .savings-slider label, .language-selector label {
     display: block;
     margin-bottom: 10px;
 }
@@ -107,7 +107,7 @@ img {
     font-weight: bold;
 }
 
-.income-slider button, .savings-slider button {
+.income-slider button, .savings-slider button, .language-selector button, .housing-spend button {
     margin-top: 10px;
     padding: 10px 20px;
     border: none;
@@ -117,6 +117,11 @@ img {
     cursor: pointer;
 }
 
-.income-slider button:hover, .savings-slider button:hover {
+.income-slider button:hover, .savings-slider button:hover, .language-selector button:hover, .housing-spend button:hover {
     background-color: #0056b3;
+}
+
+.housing-spend label {
+    display: block;
+    margin-bottom: 10px;
 }
