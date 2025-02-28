@@ -89,25 +89,25 @@ img {
     background-color: #0056b3;
 }
 
-.income-slider {
+.income-slider, .savings-slider {
     text-align: center;
 }
 
-.income-slider label {
+.income-slider label, .savings-slider label {
     display: block;
     margin-bottom: 10px;
 }
 
-.income-slider input[type="range"] {
-    width: 100%;
+.income-slider input[type="range"], .savings-slider input[type="range"] {
+    width: 100%; /* Make the range selector bar wider */
     margin-bottom: 10px;
 }
 
-.income-slider span {
+.income-slider span, .savings-slider span {
     font-weight: bold;
 }
 
-.income-slider button {
+.income-slider button, .savings-slider button {
     margin-top: 10px;
     padding: 10px 20px;
     border: none;
@@ -117,6 +117,6 @@ img {
     cursor: pointer;
 }
 
-.income-slider button:hover {
+.income-slider button:hover, .savings-slider button:hover {
     background-color: #0056b3;
 }

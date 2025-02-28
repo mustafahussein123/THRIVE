@@ -3,12 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Rent a Property</title>
+    <title>Income Selector</title>
     <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
     <header>
-        <h1>Rent a Property</h1>
+        <h1>Select Your Income</h1>
     </header>
     <main>
         <div class="income-slider">
@@ -25,9 +25,10 @@
         }
 
         function saveIncome() {
-            const income = document.getElementById('incomeRange').value;
+            const income = parseFloat(document.getElementById('incomeRange').value);
+            localStorage.setItem('selectedIncome', income);
             alert(`Income value $${income} saved for later use.`);
-            // Here you can add code to save the income value for later use
+            window.location.href = 'savingsSelector.html';
         }
     </script>
 </body>

@@ -1,7 +1,14 @@
+let rentOption = false;
+let buyOption = false;
+
 function handleRent() {
-    window.location.href = 'rent.html';
+    rentOption = true;
+    buyOption = false;
+    window.location.href = 'incomeSelector.html';
 }
 
 function handleBuy() {
-    alert("You clicked on Buy. More information will be available soon.");
+    rentOption = false;
+    buyOption = true;
+    window.location.href = 'incomeSelector.html';
 }

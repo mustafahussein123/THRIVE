@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Savings Selector</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <header>
+        <h1>Select Your Savings Amount</h1>
+    </header>
+    <main>
+        <div class="savings-slider">
+            <label for="savingsRange">Select your savings amount:</label>
+            <input type="range" id="savingsRange" name="savingsRange" min="0" max="999999" step="1000" oninput="updateSavingsValue(this.value)">
+            <span id="savingsValue">$5000</span>
+            <br>
+            <button onclick="saveSavings()">Enter Savings</button>
+        </div>
+    </main>
+    <script>
+        function updateSavingsValue(value) {
+            document.getElementById('savingsValue').textContent = `$${value}`;
+        }
+
+        function saveSavings() {
+            const savings = parseFloat(document.getElementById('savingsRange').value);
+            localStorage.setItem('selectedSavings', savings);
+            alert(`Savings value $${savings} saved for later use.`);
+            // Here you can add code to redirect to another page if needed
+        }
+    </script>
+</body>
+</html>
