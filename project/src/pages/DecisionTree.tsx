@@ -15,15 +15,15 @@ interface Question {
 
 const DecisionTree: React.FC = () => {
   const navigate = useNavigate();
-  
+
   // State to track current question index
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  
+
   // State to store all user answers
   const [userAnswers, setUserAnswers] = useState<Record<string, any>>({
     movingPurpose: null,
-    incomeLevel: 50000, // Default middle of slider
-    savingsAmount: 25000, // Default middle of slider
+    incomeLevel: 50000,
+    savingsAmount: 25000,
     languages: [],
     housingBudgetPercentage: null,
     requiresHealthcare: null,
@@ -33,17 +33,17 @@ const DecisionTree: React.FC = () => {
     safetyImportance: null,
     localAmenities: []
   });
-  
+
   // State to track progress
   const [progress, setProgress] = useState(0);
-  
+
   // Calculate progress percentage based on current question
   useEffect(() => {
     const totalQuestions = decisionTree.length;
     const progressPercentage = (currentQuestionIndex / totalQuestions) * 100;
     setProgress(progressPercentage);
   }, [currentQuestionIndex]);
-  
+
   // Define the decision tree questions
   const decisionTree: Question[] = [
     {
@@ -148,98 +148,70 @@ const DecisionTree: React.FC = () => {
       question: 'What local amenities would you look for?',
       type: 'multi-select',
       options: [
-        { value: 'parks', label: 'Parks' },
+        { value: 'parks', label: 'Parks & Recreation' },
         { value: 'libraries', label: 'Libraries' },
-        { value: 'gyms', label: 'Gyms/Fitness Centers' },
+        { value: 'gyms', label: 'Gyms' },
         { value: 'shopping', label: 'Shopping Centers' },
         { value: 'restaurants', label: 'Restaurants & Cafes' },
-        { value: 'schools', label: 'Schools' },
+        { value: 'schools', label: 'Schools & Education' },
         { value: 'cultural', label: 'Cultural Venues' }
       ]
     }
   ];
-  
-  // Get current question
+
   const currentQuestion = decisionTree[currentQuestionIndex];
-  
-  // Handle answer selection
+
+  // Handle answer selection for single-select and slider questions
   const handleAnswer = (questionId: string, answer: any) => {
-    // Update userAnswers state
-    setUserAnswers(prev => ({
-      ...prev,
-      [questionId]: answer
-    }));
+    console.log(`Question ${questionId} answer:`, answer);
+    setUserAnswers(prev => ({ ...prev, [questionId]: answer }));
   };
-  
+
   // Handle multi-select answers
   const handleMultiSelectAnswer = (questionId: string, value: string) => {
+    console.log(`Multi-select update for ${questionId} with value:`, value);
     setUserAnswers(prev => {
       const currentSelections = prev[questionId] || [];
-      
-      // If already selected, remove it; otherwise, add it
       if (currentSelections.includes(value)) {
-        return {
-          ...prev,
-          [questionId]: currentSelections.filter((item: string) => item !== value)
-        };
+        return { ...prev, [questionId]: currentSelections.filter((item: string) => item !== value) };
       } else {
-        return {
-          ...prev,
-          [questionId]: [...currentSelections, value]
-        };
+        return { ...prev, [questionId]: [...currentSelections, value] };
       }
     });
   };
-  
-  // Handle next question
+
   const handleNextQuestion = () => {
-    // Advance to next question if there is one
     if (currentQuestionIndex < decisionTree.length - 1) {
       setCurrentQuestionIndex(currentQuestionIndex + 1);
     } else {
-      // Process final answers and navigate to recommendations
-      handleFinalSubmit();
+      // When finished, navigate to results
+      navigate('/decision-tree-results', { state: { userAnswers } });
     }
   };
-  
-  // Handle previous question
+
   const handlePrevQuestion = () => {
     if (currentQuestionIndex > 0) {
       setCurrentQuestionIndex(currentQuestionIndex - 1);
     }
   };
-  
-  // Handle final submission of all answers
-  const handleFinalSubmit = () => {
-    // Navigate to results page with user answers
-    navigate('/decision-tree-results', { state: { userAnswers } });
-  };
-  
-  // Check if current question has an answer
+
   const hasCurrentAnswer = () => {
     if (!currentQuestion) return false;
-    
     const answer = userAnswers[currentQuestion.id];
-    
     switch (currentQuestion.type) {
       case 'single-select':
         return answer !== null && answer !== undefined;
-        
       case 'multi-select':
         return Array.isArray(answer) && answer.length > 0;
-        
       case 'slider':
-        return true; // Sliders always have a value
-        
+        return answer !== undefined;
       default:
         return false;
     }
   };
-  
-  // Render question based on type
+
   const renderQuestion = () => {
     if (!currentQuestion) return null;
-    
     switch (currentQuestion.type) {
       case 'single-select':
         return (
@@ -247,73 +219,59 @@ const DecisionTree: React.FC = () => {
             {currentQuestion.options?.map((option, index) => (
               <button
                 key={index}
-                className={`w-full p-4 rounded-lg border text-left ${
+                type="button"
+                className={`w-full p-4 rounded-lg border text-left cursor-pointer ${
                   userAnswers[currentQuestion.id] === option.value
                     ? 'bg-green-100 border-green-500'
                     : 'bg-white border-gray-300 hover:bg-gray-50'
                 }`}
                 onClick={() => handleAnswer(currentQuestion.id, option.value)}
               >
-                <span 
-                  className={`font-medium ${
-                    userAnswers[currentQuestion.id] === option.value
-                      ? 'text-green-700'
-                      : 'text-gray-700'
-                  }`}
-                >
+                <span className="font-medium">
                   {option.label}
                 </span>
               </button>
             ))}
           </div>
         );
-        
-      case 'multi-select':
-        return (
-          <div className="space-y-3">
-            {currentQuestion.options?.map((option, index) => {
-              const isSelected = (userAnswers[currentQuestion.id] || []).includes(option.value);
-              
-              return (
-                <button
-                  key={index}
-                  className={`w-full p-4 rounded-lg border flex justify-between items-center ${
-                    isSelected
-                      ? 'bg-green-100 border-green-500'
-                      : 'bg-white border-gray-300 hover:bg-gray-50'
-                  }`}
-                  onClick={() => handleMultiSelectAnswer(currentQuestion.id, option.value as string)}
-                >
-                  <span 
-                    className={`font-medium ${
+        case 'multi-select':
+          return (
+            <div className="space-y-3">
+              {currentQuestion.options?.map((option, index) => {
+                const isSelected = (userAnswers[currentQuestion.id] || []).includes(option.value);
+                return (
+                  <button
+                    key={index}
+                    type="button"
+                    // Inline style ensures pointer events are enabled
+                    style={{ pointerEvents: 'auto' }}
+                    className={`w-full p-4 rounded-lg border flex items-center justify-between cursor-pointer relative z-20 ${
                       isSelected
-                        ? 'text-green-700'
-                        : 'text-gray-700'
+                        ? 'bg-green-100 border-green-500'
+                        : 'bg-white border-gray-300 hover:bg-gray-50'
                     }`}
+                    onClick={() => {
+                      console.log("Clicked option:", option.value);
+                      handleMultiSelectAnswer(currentQuestion.id, option.value as string);
+                    }}
                   >
-                    {option.label}
-                  </span>
-                  
-                  {isSelected && (
-                    <Check className="w-5 h-5 text-green-600" />
-                  )}
-                </button>
-              );
-            })}
-          </div>
-        );
+                    <span className="flex-1 text-left font-medium">
+                      {option.label}
+                    </span>
+                    {isSelected && <Check className="w-5 h-5 text-green-600" />}
+                  </button>
+                );
+              })}
+            </div>
+          );
         
       case 'slider':
-        // Set default value if not already set
         const currentValue = userAnswers[currentQuestion.id] !== undefined
           ? userAnswers[currentQuestion.id]
-          : (currentQuestion.min && currentQuestion.max) 
+          : (currentQuestion.min && currentQuestion.max)
             ? (currentQuestion.min + currentQuestion.max) / 2
             : 0;
-          
-        // Format value with commas for thousands
         const formattedValue = currentValue.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-        
         return (
           <div className="space-y-6">
             <div className="flex justify-center">
@@ -321,7 +279,6 @@ const DecisionTree: React.FC = () => {
                 {currentQuestion.displayPrefix || ''}{formattedValue}
               </span>
             </div>
-            
             <input
               type="range"
               min={currentQuestion.min}
@@ -331,7 +288,6 @@ const DecisionTree: React.FC = () => {
               onChange={(e) => handleAnswer(currentQuestion.id, parseInt(e.target.value))}
               className="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer accent-green-600"
             />
-            
             <div className="flex justify-between">
               <span className="text-gray-500">
                 {currentQuestion.displayPrefix || ''}{currentQuestion.min?.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}
@@ -342,18 +298,17 @@ const DecisionTree: React.FC = () => {
             </div>
           </div>
         );
-        
       default:
         return null;
     }
   };
-  
+
   return (
     <div className="min-h-screen bg-white">
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center">
-            <button 
+            <button
               onClick={() => navigate(-1)}
               className="mr-4 text-gray-600 hover:text-green-600"
             >
@@ -380,25 +335,18 @@ const DecisionTree: React.FC = () => {
       <main className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="space-y-6">
           <h2 className="text-2xl font-bold text-gray-800">{currentQuestion?.question}</h2>
-          
           {renderQuestion()}
-          
           <div className="flex justify-between mt-8">
             <button
               onClick={handlePrevQuestion}
-              className={`py-3 px-6 rounded-lg ${
-                currentQuestionIndex === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'
-              }`}
+              className={`py-3 px-6 rounded-lg ${currentQuestionIndex === 0 ? 'bg-gray-200 text-gray-400 cursor-not-allowed' : 'bg-gray-300 text-gray-700 hover:bg-gray-400'}`}
               disabled={currentQuestionIndex === 0}
             >
               <span className="font-semibold">Back</span>
             </button>
-            
             <button
               onClick={handleNextQuestion}
-              className={`py-3 px-6 rounded-lg ${
-                hasCurrentAnswer() ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'
-              }`}
+              className={`py-3 px-6 rounded-lg ${hasCurrentAnswer() ? 'bg-green-500 text-white hover:bg-green-600' : 'bg-gray-300 text-gray-500 cursor-not-allowed'}`}
               disabled={!hasCurrentAnswer()}
             >
               <span className="font-semibold">
