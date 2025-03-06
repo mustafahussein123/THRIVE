@@ -1,45 +1,48 @@
 import axios from 'axios';
-import { Location } from '../types';
+import { Location, ZillowRental, QuestionnaireResponse, RecommendationResponse } from '../types';
 
-// Configure axios defaults
-axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5000/api';
+// Set the base URL from environment variable or default to localhost
+axios.defaults.baseURL = import.meta.env.VITE_API_URL || 'http://localhost:5001/api';
 
-// Add token to requests if available
+// If a token is stored, add it to headers
 const token = localStorage.getItem('token');
 if (token) {
   axios.defaults.headers.common['x-auth-token'] = token;
 }
 
-/**
- * API Service for Thrive app
- */
 const ApiService = {
   /**
-   * Get all locations with optional search
-   * @param {string} search - Optional search query
-   * @param {number} limit - Results per page
-   * @param {number} offset - Pagination offset
-   * @returns {Promise} - Locations data
+   * Get Zillow rentals for a specific city and state.
+   * Data comes from your real zillow_rentals.json served by your backend.
    */
-  getLocations: async (search?: string, limit = 10, offset = 0) => {
+  getZillowRentals: async (city: string, state: string): Promise<ZillowRental[]> => {
     try {
-      const params: any = { limit, offset };
-      if (search) params.search = search;
-      
-      const response = await axios.get('/locations', { params });
+      const response = await axios.get(`/rentals?city=${city}&state=${state}`);
+      console.log("getZillowRentals data:", response.data); // Debug log
       return response.data;
     } catch (error) {
-      console.error('Error fetching locations:', error);
+      console.error('Error fetching Zillow rentals:', error);
       throw error;
     }
   },
 
   /**
-   * Get location by ID
-   * @param {string} id - Location ID
-   * @returns {Promise} - Location data
+   * Submit questionnaire responses and get personalized recommendations.
    */
-  getLocationById: async (id: string) => {
+  submitQuestionnaire: async (data: QuestionnaireResponse): Promise<RecommendationResponse> => {
+    try {
+      const response = await axios.post('/scoring/recommendations', data);
+      return response.data;
+    } catch (error) {
+      console.error('Error submitting questionnaire:', error);
+      throw error;
+    }
+  },
+
+  /**
+   * Get a location by its ID.
+   */
+  getLocationById: async (id: string): Promise<Location> => {
     try {
       const response = await axios.get(`/locations/${id}`);
       return response.data;
@@ -50,25 +53,9 @@ const ApiService = {
   },
 
   /**
-   * Get recommended locations based on user profile
-   * @returns {Promise} - Recommended locations
+   * Compare locations by passing an array of location IDs.
    */
-  getRecommendedLocations: async () => {
-    try {
-      const response = await axios.get('/locations/recommendations/profile');
-      return response.data;
-    } catch (error) {
-      console.error('Error fetching recommendations:', error);
-      throw error;
-    }
-  },
-
-  /**
-   * Compare locations
-   * @param {string[]} locationIds - Array of location IDs to compare
-   * @returns {Promise} - Comparison data
-   */
-  compareLocations: async (locationIds: string[]) => {
+  compareLocations: async (locationIds: string[]): Promise<any> => {
     try {
       const response = await axios.post('/locations/compare', { locationIds });
       return response.data;
@@ -79,11 +66,9 @@ const ApiService = {
   },
 
   /**
-   * Save location for current user
-   * @param {string} locationId - Location ID to save
-   * @returns {Promise} - Success message
+   * Save a location for the current user.
    */
-  saveLocation: async (locationId: string) => {
+  saveLocation: async (locationId: string): Promise<any> => {
     try {
       const response = await axios.post('/locations/save', { locationId });
       return response.data;
@@ -94,10 +79,9 @@ const ApiService = {
   },
 
   /**
-   * Get saved locations for current user
-   * @returns {Promise} - Saved locations
+   * Get saved locations for the current user.
    */
-  getSavedLocations: async () => {
+  getSavedLocations: async (): Promise<Location[]> => {
     try {
       const response = await axios.get('/locations/saved/user');
       return response.data;
@@ -108,11 +92,9 @@ const ApiService = {
   },
 
   /**
-   * Remove saved location
-   * @param {string} locationId - Location ID to remove
-   * @returns {Promise} - Success message
+   * Remove a saved location for the current user.
    */
-  removeSavedLocation: async (locationId: string) => {
+  removeSavedLocation: async (locationId: string): Promise<any> => {
     try {
       const response = await axios.delete(`/locations/saved/${locationId}`);
       return response.data;
@@ -123,10 +105,9 @@ const ApiService = {
   },
 
   /**
-   * Get user profile
-   * @returns {Promise} - User profile data
+   * Get the user profile.
    */
-  getUserProfile: async () => {
+  getUserProfile: async (): Promise<any> => {
     try {
       const response = await axios.get('/profile');
       return response.data;
@@ -137,11 +118,9 @@ const ApiService = {
   },
 
   /**
-   * Create or update user profile
-   * @param {Object} profileData - Profile data
-   * @returns {Promise} - Updated profile
+   * Create or update the user profile.
    */
-  updateUserProfile: async (profileData: any) => {
+  updateUserProfile: async (profileData: any): Promise<any> => {
     try {
       const response = await axios.post('/profile', profileData);
       return response.data;
@@ -152,10 +131,9 @@ const ApiService = {
   },
 
   /**
-   * Get notification preferences
-   * @returns {Promise} - Notification preferences
+   * Get notification preferences for the user.
    */
-  getNotificationPreferences: async () => {
+  getNotificationPreferences: async (): Promise<any> => {
     try {
       const response = await axios.get('/profile/notifications');
       return response.data;
@@ -166,11 +144,9 @@ const ApiService = {
   },
 
   /**
-   * Update notification preferences
-   * @param {Object} preferences - Notification preferences
-   * @returns {Promise} - Updated preferences
+   * Update notification preferences for the user.
    */
-  updateNotificationPreferences: async (preferences: any) => {
+  updateNotificationPreferences: async (preferences: any): Promise<any> => {
     try {
       const response = await axios.post('/profile/notifications', { preferences });
       return response.data;
@@ -181,17 +157,11 @@ const ApiService = {
   },
 
   /**
-   * Get reviews for a location
-   * @param {string} locationId - Location ID
-   * @param {number} limit - Results per page
-   * @param {number} offset - Pagination offset
-   * @returns {Promise} - Reviews data
+   * Get reviews for a specific location.
    */
-  getLocationReviews: async (locationId: string, limit = 10, offset = 0) => {
+  getLocationReviews: async (locationId: string, limit = 10, offset = 0): Promise<any> => {
     try {
-      const response = await axios.get(`/reviews/location/${locationId}`, {
-        params: { limit, offset }
-      });
+      const response = await axios.get(`/reviews/location/${locationId}`, { params: { limit, offset } });
       return response.data;
     } catch (error) {
       console.error('Error fetching reviews:', error);
@@ -200,11 +170,9 @@ const ApiService = {
   },
 
   /**
-   * Add a review for a location
-   * @param {Object} reviewData - Review data
-   * @returns {Promise} - Created review
+   * Add a review for a location.
    */
-  addReview: async (reviewData: any) => {
+  addReview: async (reviewData: any): Promise<any> => {
     try {
       const response = await axios.post('/reviews', reviewData);
       return response.data;
@@ -215,12 +183,9 @@ const ApiService = {
   },
 
   /**
-   * Update a review
-   * @param {string} reviewId - Review ID
-   * @param {Object} reviewData - Updated review data
-   * @returns {Promise} - Updated review
+   * Update a review for a location.
    */
-  updateReview: async (reviewId: string, reviewData: any) => {
+  updateReview: async (reviewId: string, reviewData: any): Promise<any> => {
     try {
       const response = await axios.put(`/reviews/${reviewId}`, reviewData);
       return response.data;
@@ -231,11 +196,9 @@ const ApiService = {
   },
 
   /**
-   * Delete a review
-   * @param {string} reviewId - Review ID
-   * @returns {Promise} - Success message
+   * Delete a review for a location.
    */
-  deleteReview: async (reviewId: string) => {
+  deleteReview: async (reviewId: string): Promise<any> => {
     try {
       const response = await axios.delete(`/reviews/${reviewId}`);
       return response.data;
@@ -246,16 +209,12 @@ const ApiService = {
   },
 
   /**
-   * Get nearby healthcare facilities
-   * @param {number} latitude - Latitude coordinate
-   * @param {number} longitude - Longitude coordinate
-   * @param {number} radius - Search radius in meters
-   * @returns {Promise} - Healthcare facilities data
+   * Get nearby healthcare facilities based on latitude and longitude.
+   * This is a mock implementation—replace it with a real API call if needed.
    */
-  getHealthcareFacilities: async (latitude: number, longitude: number, radius = 5000) => {
+  getHealthcareFacilities: async (latitude: number, longitude: number, radius = 5000): Promise<any> => {
     try {
-      // This is a mock implementation for now
-      // In a real app, this would call the backend API
+      // Replace with a real API call if necessary.
       return {
         results: [
           {
