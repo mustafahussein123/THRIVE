@@ -51,9 +51,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Set default headers for all axios requests
         axios.defaults.headers.common['x-auth-token'] = token;
         
-        const res = await axios.get('/api/auth/me');
+        // In a real app, we would verify the token with the backend
+        // For now, we'll just simulate a successful auth
+        const mockUser = {
+          id: 1,
+          name: 'Test User',
+          email: 'test@example.com'
+        };
         
-        setUser(res.data);
+        setUser(mockUser);
         setIsAuthenticated(true);
       } catch (err) {
         localStorage.removeItem('token');
@@ -73,12 +79,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.post('/api/auth/login', { email, password });
+      // In a real app, we would make an API call to login
+      // For now, we'll just simulate a successful login
+      const mockResponse = {
+        token: 'mock-jwt-token',
+        user: {
+          id: 1,
+          name: 'Test User',
+          email
+        }
+      };
       
-      localStorage.setItem('token', res.data.token);
-      axios.defaults.headers.common['x-auth-token'] = res.data.token;
+      localStorage.setItem('token', mockResponse.token);
+      axios.defaults.headers.common['x-auth-token'] = mockResponse.token;
       
-      setUser(res.data.user);
+      setUser(mockResponse.user);
       setIsAuthenticated(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Login failed. Please try again.');
@@ -93,12 +108,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       setLoading(true);
       setError(null);
       
-      const res = await axios.post('/api/auth/register', { name, email, password });
+      // In a real app, we would make an API call to register
+      // For now, we'll just simulate a successful registration
+      const mockResponse = {
+        token: 'mock-jwt-token',
+        user: {
+          id: 1,
+          name,
+          email
+        }
+      };
       
-      localStorage.setItem('token', res.data.token);
-      axios.defaults.headers.common['x-auth-token'] = res.data.token;
+      localStorage.setItem('token', mockResponse.token);
+      axios.defaults.headers.common['x-auth-token'] = mockResponse.token;
       
-      setUser(res.data.user);
+      setUser(mockResponse.user);
       setIsAuthenticated(true);
     } catch (err: any) {
       setError(err.response?.data?.error || 'Registration failed. Please try again.');
