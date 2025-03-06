@@ -3,7 +3,8 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { ArrowLeft, MapPin, Check, Star } from 'lucide-react';
 import ApiService from '../services/ApiService';
-import { Location, ZillowRental } from '../types';
+import Pagination from '../components/Pagination';
+import { ZillowRental } from '../types';
 
 interface UserProfile {
   movingPurpose: string;
@@ -31,11 +32,15 @@ const DecisionTreeResults: React.FC = () => {
   const navigate = useNavigate();
   const locationRoute = useLocation();
   const userAnswers = locationRoute.state?.userAnswers || {};
-  
+
   const [isLoading, setIsLoading] = useState(true);
   const [recommendedLocations, setRecommendedLocations] = useState<RecommendedLocation[]>([]);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
-  
+
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const resultsPerPage = 12;
+
   useEffect(() => {
     const generateRecommendations = async () => {
       setIsLoading(true);
@@ -45,35 +50,39 @@ const DecisionTreeResults: React.FC = () => {
         setUserProfile(processedProfile);
         const monthlyBudget = getMonthlyBudget();
         console.log("Calculated monthly housing budget:", monthlyBudget);
-  
-        // Fetch Zillow rentals from your backend for CA and TX
-        const rentalsCA: ZillowRental[] = await ApiService.getZillowRentals('', 'CA');
-        const rentalsTX: ZillowRental[] = await ApiService.getZillowRentals('', 'TX');
-        const allRentals = [...rentalsCA, ...rentalsTX];
-        console.log("Total rentals retrieved:", allRentals.length);
-  
-        // Filter rentals by monthly budget
-        const filteredRentals = allRentals.filter((r: any) => {
-          if (!r.units || !r.units.length) return false;
+
+        // Fetch rentals from your local zillow_rentals.json (placed in public folder)
+        const response = await fetch('/zillow_rentals.json');
+        const allRentals: ZillowRental[] = await response.json();
+
+        // Filter rentals to only include CA and TX
+        const filteredByState = allRentals.filter(rental =>
+          rental.addressState === 'CA' || rental.addressState === 'TX'
+        );
+        console.log("Total rentals after state filter:", filteredByState.length);
+
+        // Filter rentals based on monthly budget
+        const filteredRentals = filteredByState.filter(rental => {
+          if (!rental.units || rental.units.length === 0) return false;
           let lowestPrice = Infinity;
-          r.units.forEach((unit: any) => {
+          rental.units.forEach(unit => {
             const price = parseFloat(unit.price.replace(/[^0-9.]/g, ''));
             if (!isNaN(price) && price < lowestPrice) {
               lowestPrice = price;
             }
           });
-          console.log(`Rental ${r.id} - lowest price: ${lowestPrice}`);
+          console.log(`Rental ${rental.id} - lowest price: ${lowestPrice}`);
           return lowestPrice <= monthlyBudget;
         });
         console.log("Rentals after filtering by monthly budget:", filteredRentals.length);
-  
+
         if (filteredRentals.length === 0) {
           setRecommendedLocations([]);
         } else {
           // Calculate match score for each rental
-          const recommendations: RecommendedLocation[] = filteredRentals.map((r: any) => {
+          const recommendations: RecommendedLocation[] = filteredRentals.map(rental => {
             let lowestPrice = Infinity;
-            r.units.forEach((unit: any) => {
+            rental.units.forEach(unit => {
               const price = parseFloat(unit.price.replace(/[^0-9.]/g, ''));
               if (!isNaN(price) && price < lowestPrice) {
                 lowestPrice = price;
@@ -82,10 +91,10 @@ const DecisionTreeResults: React.FC = () => {
             const scoreDiff = Math.abs((monthlyBudget * 0.9) - lowestPrice);
             const matchScore = Math.max(0, 100 - scoreDiff / 10);
             return {
-              ...r,
+              ...rental,
               matchScore: Math.floor(matchScore),
-              keyFeatures: r.carouselPhotos ? ['Great photos'] : [],
-              costBreakdown: r.costBreakdown || {
+              keyFeatures: rental.carouselPhotos ? ['Great photos'] : [],
+              costBreakdown: rental.costBreakdown || {
                 housing: lowestPrice,
                 food: 0,
                 transportation: 0,
@@ -103,15 +112,15 @@ const DecisionTreeResults: React.FC = () => {
         setIsLoading(false);
       }
     };
-  
+
     generateRecommendations();
   }, [userAnswers]);
-  
+
   const processUserAnswers = (answers: any): UserProfile => {
     const housingBudgetFactor =
       answers.housingBudgetPercentage === 'less-than-30' ? 0.25 :
       answers.housingBudgetPercentage === '30-40' ? 0.35 : 0.45;
-  
+
     return {
       movingPurpose: answers.movingPurpose === 'rent' ? 'Renting' : 'Buying',
       monthlySalary: Math.round(answers.incomeLevel / 12),
@@ -124,7 +133,7 @@ const DecisionTreeResults: React.FC = () => {
       amenities: processAmenities(answers)
     };
   };
-  
+
   const processAmenities = (answers: any): string[] => {
     const amenities: string[] = [];
     if (answers.needsBikeLanes) amenities.push('Bike Lanes/Trails');
@@ -146,25 +155,38 @@ const DecisionTreeResults: React.FC = () => {
     }
     return amenities;
   };
-  
+
   const getMonthlyBudget = () => {
     const monthlyIncome = Number(userAnswers.incomeLevel) / 12;
     if (userAnswers.housingBudgetPercentage === 'less-than-30') return monthlyIncome * 0.3;
     else if (userAnswers.housingBudgetPercentage === '30-40') return monthlyIncome * 0.4;
     else return monthlyIncome * 0.5;
   };
-  
+
   const handleLocationPress = (location: RecommendedLocation) => {
     navigate(`/location/${location.id}`, { state: { location } });
   };
-  
+
   const handleSaveProfile = () => {
+    // Save the processed user profile for later use
     if (userProfile) {
       localStorage.setItem('userProfile', JSON.stringify(userProfile));
     }
     navigate('/');
   };
-  
+
+  const formatCurrency = (value: number): string => {
+    return value.toLocaleString();
+  };
+
+  const getScoreColor = (score: number): string => {
+    if (score >= 90) return 'text-green-600';
+    if (score >= 80) return 'text-green-500';
+    if (score >= 70) return 'text-yellow-500';
+    if (score >= 60) return 'text-orange-500';
+    return 'text-red-500';
+  };
+
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
@@ -174,7 +196,7 @@ const DecisionTreeResults: React.FC = () => {
       </div>
     );
   }
-  
+
   if (!recommendedLocations.length) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center p-4">
@@ -191,9 +213,11 @@ const DecisionTreeResults: React.FC = () => {
       </div>
     );
   }
-  
-  const monthlyBudget = getMonthlyBudget();
-  
+
+  // Pagination calculations
+  const totalPages = Math.ceil(recommendedLocations.length / resultsPerPage);
+  const currentResults = recommendedLocations.slice((currentPage - 1) * resultsPerPage, currentPage * resultsPerPage);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <header className="bg-white shadow-sm">
@@ -206,7 +230,7 @@ const DecisionTreeResults: React.FC = () => {
           </div>
         </div>
       </header>
-  
+
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {userProfile && (
           <div className="bg-white rounded-lg shadow-md p-6 mb-8">
@@ -249,61 +273,58 @@ const DecisionTreeResults: React.FC = () => {
             </button>
           </div>
         )}
-  
+
         <div className="mb-6">
           <h2 className="text-xl font-bold text-gray-800">Recommended Locations</h2>
           <p className="text-gray-600">Based on your preferences</p>
         </div>
-  
-        <div className="space-y-6">
-          {recommendedLocations.map(location => (
-            <div key={location.id} className="bg-white rounded-lg shadow-md overflow-hidden">
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {currentResults.map(rental => (
+            <div key={rental.id} className="bg-white rounded-lg shadow-md overflow-hidden">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
                   <div>
                     <h3 className="text-xl font-bold text-gray-800 flex items-center">
                       <MapPin className="w-5 h-5 mr-1 text-green-600" />
-                      {location.buildingName || location.addressStreet || `${location.city}, ${location.state}`}
+                      {rental.buildingName || rental.addressStreet || `${rental.city}, ${rental.state}`}
                     </h3>
-                    {location.address && (
-                      <p className="text-gray-500">{location.address}</p>
-                    )}
-                    {/* Display latitude and longitude if available */}
-                    {location.latLong && (
+                    {rental.address && <p className="text-gray-500">{rental.address}</p>}
+                    {rental.latLong && (
                       <p className="text-xs text-gray-500">
-                        Lat: {location.latLong.latitude}, Lng: {location.latLong.longitude}
+                        Lat: {rental.latLong.latitude}, Lng: {rental.latLong.longitude}
                       </p>
                     )}
                   </div>
                   <div className="text-center">
                     <p className="text-sm text-gray-600">Match Score</p>
-                    <p className={`text-xl font-bold ${getScoreColor(location.matchScore)}`}>
-                      {location.matchScore}%
+                    <p className={`text-xl font-bold ${getScoreColor(rental.matchScore)}`}>
+                      {rental.matchScore}%
                     </p>
                   </div>
                 </div>
-  
+
                 <div className="flex flex-wrap mb-4">
-                  {location.keyFeatures.map((feature, index) => (
+                  {rental.keyFeatures.map((feature, index) => (
                     <span key={index} className="bg-gray-100 rounded-full px-2 py-1 mr-2 mb-1 text-xs text-gray-700">
                       {feature}
                     </span>
                   ))}
                 </div>
-  
+
                 <div className="border-t border-gray-100 pt-4 mt-2">
                   <p className="text-gray-700 font-semibold mb-2">Monthly Cost Breakdown:</p>
                   <div className="grid grid-cols-2 gap-2">
-                    <p className="text-gray-600">🏠 Housing: ${location.costBreakdown?.housing ?? 'N/A'}</p>
-                    <p className="text-gray-600">🍽️ Food: ${location.costBreakdown?.food ?? 'N/A'}</p>
-                    <p className="text-gray-600">🚗 Transport: ${location.costBreakdown?.transportation ?? 'N/A'}</p>
-                    <p className="text-gray-600">⚕️ Healthcare: ${location.costBreakdown?.healthcare ?? 'N/A'}</p>
+                    <p className="text-gray-600">🏠 Housing: ${rental.costBreakdown?.housing ?? 'N/A'}</p>
+                    <p className="text-gray-600">🍽️ Food: ${rental.costBreakdown?.food ?? 'N/A'}</p>
+                    <p className="text-gray-600">🚗 Transport: ${rental.costBreakdown?.transportation ?? 'N/A'}</p>
+                    <p className="text-gray-600">⚕️ Healthcare: ${rental.costBreakdown?.healthcare ?? 'N/A'}</p>
                   </div>
                 </div>
-  
-                <button 
+
+                <button
                   className="mt-4 py-2 w-full bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                  onClick={() => handleLocationPress(location)}
+                  onClick={() => handleLocationPress(rental)}
                 >
                   View Full Details
                 </button>
@@ -311,21 +332,16 @@ const DecisionTreeResults: React.FC = () => {
             </div>
           ))}
         </div>
+
+        {/* Pagination Controls */}
+        <Pagination
+          currentPage={currentPage}
+          totalPages={totalPages}
+          onPageChange={(page) => setCurrentPage(page)}
+        />
       </main>
     </div>
   );
 };
-  
-const getScoreColor = (score: number): string => {
-  if (score >= 90) return 'text-green-600';
-  if (score >= 80) return 'text-green-500';
-  if (score >= 70) return 'text-yellow-500';
-  if (score >= 60) return 'text-orange-500';
-  return 'text-red-500';
-};
-  
-const formatCurrency = (value: number): string => {
-  return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-};
-  
+
 export default DecisionTreeResults;
