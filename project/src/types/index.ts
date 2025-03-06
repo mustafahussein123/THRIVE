@@ -1,15 +1,17 @@
 export interface Location {
-  id: number;
-  name: string;
+  id: string;
+  city: string;
+  state: string;
   country: string;
-  region: string;
-  population: number;
-  costOfLiving: {
+  latitude: number;
+  longitude: number;
+  affordabilityScore: number;
+  costBreakdown: {
     housing: number;
-    utilities: number;
+    food: number;
     transportation: number;
-    groceries: number;
-    entertainment: number;
+    healthcare: number;
+    utilities: number;
   };
   qualityOfLife: {
     safety: number;
@@ -24,73 +26,58 @@ export interface Location {
   };
 }
 
-export interface ComparisonData {
-  source: Location;
-  targets: Location[];
-  comparisons: any;
-}
-
-export interface UserPreferences {
-  priorityFactors: string[];
-  budgetRange: {
-    min: number;
-    max: number;
+export interface ZillowRental {
+  zpid: string;
+  id: string;
+  imgSrc: string;
+  detailUrl: string;
+  address: string;
+  addressStreet: string;
+  addressCity: string;
+  addressState: string;
+  addressZipcode: string;
+  units: {
+    price: string;
+    beds: string;
+    roomForRent: boolean;
+  }[];
+  latLong: {
+    latitude: number;
+    longitude: number;
   };
-  desiredAmenities: string[];
-  climatePreference: string;
+  buildingName?: string;
+  isBuilding?: boolean;
+  carouselPhotos?: {
+    url: string;
+  }[];
+  availabilityCount?: number;
+  badgeInfo?: {
+    type: string;
+    text: string;
+  };
 }
 
-export interface UserProfile {
-  id: number;
-  userId: number;
+export interface QuestionnaireResponse {
+  city: string;
+  state: string;
   income: number;
   savings: number;
-  householdSize: number;
-  housingPreference: string;
-  housingBudgetPreference: string;
-  requiresHealthcare: boolean;
-  transportationPreference: string;
-  entertainmentImportance: string;
-  needsBikeLanes: boolean;
-  safetyImportance: string;
-  relocationTimeframe: string;
-  remoteWork: boolean;
-  languages: string[];
+  household_size: number;
+  healthcare_required: boolean;
+  housing_budget_percentage: string;
+  transportation_preference: string;
   amenities: {
-    parks?: boolean;
-    libraries?: boolean;
-    gyms?: boolean;
-    shopping?: boolean;
-    restaurants?: boolean;
-    schools?: boolean;
-    cultural?: boolean;
+    parks: boolean;
+    gyms: boolean;
+    shopping: boolean;
+    restaurants: boolean;
+    schools: boolean;
   };
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Review {
-  id: number;
-  userId: number;
-  locationId: number;
-  content: string;
-  overallRating: number;
-  affordabilityRating: number;
-  safetyRating: number;
-  transportationRating: number;
-  amenitiesRating: number;
-  createdAt: string;
-  updatedAt: string;
-  userName: string;
-}
-
-export interface NotificationPreferences {
-  id: number;
-  userId: number;
-  priceChanges: boolean;
-  newLocations: boolean;
-  serviceUpdates: boolean;
-  weeklyDigest: boolean;
-  createdAt: string;
-  updatedAt: string;
+export interface RecommendationResponse {
+  city: string;
+  state: string;
+  affordability_score: number;
+  recommendations: ZillowRental[];
 }
